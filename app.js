@@ -5,7 +5,8 @@ const ejs = require("ejs");
 const bodyParser = require("body-parser");
 const app = express();
 const mongoose = require('mongoose');
-const encrypt = require("mongoose-encryption");
+// const encrypt = require("mongoose-encryption");
+const md5 = require("md5");
 
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.static("public"));
@@ -19,8 +20,8 @@ const userSchema = new mongoose.Schema({
     password: String
 });
 
-const secret = "Thisisourlittlesecret";
-userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedfields:['password'] });
+// const secret = "Thisisourlittlesecret";
+// userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedfields:['password'] });
 
 
 const User = new mongoose.model('User',userSchema);
@@ -40,7 +41,7 @@ app.get("/register",function(req,res){
 app.post("/register",function(req,res){
   const newUser = new User({
     email: req.body.username,
-    password: req.body.password
+    password: md5(req.body.password)
   });
   newUser.save(function(err){
     if (err){
@@ -59,11 +60,14 @@ app.post("/login",function(req,res){
     if (err){
       console.log(err);
     } else {
-      if (foundUser.password === req.body.password) {
-      res.render("Secrets");
-    } else{
-      console.log("incorrect password");
-    }
+      if (foundUser){
+        if (foundUser.password === md5(req.body.password)) {
+        res.render("Secrets");
+      } else{
+        console.log("incorrect password");
+      }
+      }
+
     }
   });
 });
